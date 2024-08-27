@@ -27,7 +27,18 @@ using namespace std;
 class Global {
 public:
 	int xres, yres;
-	Global();
+	float w;
+	float vel;
+	float pos[2];
+	Global()
+	{
+		xres = 400;
+		yres = 200;
+		w = 20.0f;
+		vel = 30.0f;
+		pos[0] = 0.0f+w;
+		pos[1] = yres/2.0f;
+	}
 } g;
 
 class X11_wrapper {
@@ -73,27 +84,39 @@ int main()
 		}
 //100, 120, 220
 		physics();
-        if(counter % 5 == 0) {
+        if(counter % 5 == 0 && g.xres < 800 && g.yres < 400) {
             if(spot1 < 255)
                 spot1++;
             if(spot2 > 0)
                 spot2--;
             if(spot3 > 0) 
                 spot3 -= 2;
-        }
+        } else if(counter % 5 == 0) {
+            if(spot1 < 138)
+                spot1++;
+	    else if(spot1 > 138) {
+		spot1--;
+	    }
+            if(spot2 < 43)
+                spot2++;
+	    else if(spot2 > 43) {
+		spot2--;
+	    }
+            if(spot3 < 226)
+                spot3++;
+	    else if(spot3 > 226) {
+		spot3--;
+	    }
+
+	}
 		render();
-        counter++;
+	        counter++;
 		x11.swapBuffers();
 		usleep(200);
 	}
 	return 0;
 }
 
-Global::Global()
-{
-	xres = 400;
-	yres = 200;
-}
 
 X11_wrapper::~X11_wrapper()
 {
@@ -244,49 +267,50 @@ void init_opengl(void)
 {
 	//OpenGL initialization
 	glViewport(0, 0, g.xres, g.yres);
-	//Initialize matrices
-	glMatrixMode(GL_PROJECTION); glLoadIdentity();
-	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+	//Initialize projection matrix
+	glMatrixMode(GL_PROJECTION); 
+	glLoadIdentity();
 	//Set 2D mode (no perspective)
 	glOrtho(0, g.xres, 0, g.yres, -1, 1);
+	//intialize model view matrix
+	glMatrixMode(GL_MODELVIEW); 
+	glLoadIdentity();
 	//Set the screen background color
+	//Set when screen is clear
 	glClearColor(0.1, 0.1, 0.1, 1.0);
 }
 
 void physics()
 {
 	//No physics yet.
+	g.pos[0] += g.vel;
+	if (g.pos[0] >= (g.xres-g.w)) {
+		g.pos[0] = (g.xres-g.w);
+		g.vel = -g.vel;
+	}
+	if (g.pos[0] <= g.w) {
+		g.pos[0] = g.w;
+		g.vel = -g.vel;
+	}
 
 }
 
 void render()
 {
-	static float w = 20.0f;
-	static float dir = 30.0f;
-	static float pos[2] = { 0.0f+w, g.yres/2.0f };
 	//
 	glClear(GL_COLOR_BUFFER_BIT);
 	//draw the box
 	glPushMatrix();
 	//glColor3ub(100, 120, 220);
 	glColor3ub(spot1, spot2, spot3);
-	glTranslatef(pos[0], pos[1], 0.0f);
+	glTranslatef(g.pos[0], g.pos[1], 0.0f);
 	glBegin(GL_QUADS);
-		glVertex2f(-w, -w);
-		glVertex2f(-w,  w);
-		glVertex2f( w,  w);
-		glVertex2f( w, -w);
+		glVertex2f(-g.w, -g.w);
+		glVertex2f(-g.w,  g.w);
+		glVertex2f( g.w,  g.w);
+		glVertex2f( g.w, -g.w);
 	glEnd();
 	glPopMatrix();
-	pos[0] += dir;
-	if (pos[0] >= (g.xres-w)) {
-		pos[0] = (g.xres-w);
-		dir = -dir;
-	}
-	if (pos[0] <= w) {
-		pos[0] = w;
-		dir = -dir;
-	}
 }
 
 
